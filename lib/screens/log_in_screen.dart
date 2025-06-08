@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } catch (e) {
-        ToastService.showError(e.toString());
+        ToastService.showError("Invalid email or password. Please try again.");
       } finally {
         if (mounted) {
           setState(() => _isLoading = false);
