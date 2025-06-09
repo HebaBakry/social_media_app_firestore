@@ -38,10 +38,22 @@ class _PostCardState extends State<PostCard> {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseService.getUserStream(userId),
       builder: (context, snapshot) {
-        String username = snapshot.data?['username'] ?? 'User';
-        String firstLetter = username.isNotEmpty
-            ? username[0].toUpperCase()
-            : '?';
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        String username = 'User';
+        String firstLetter = '?';
+        String? photoURL;
+
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+
+          username = data['username'] ?? 'User';
+          firstLetter = username.isNotEmpty ? username[0].toUpperCase() : '?';
+
+          photoURL = data.containsKey('photoURL') ? data['photoURL'] : null;
+        }
 
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -76,17 +88,25 @@ class _PostCardState extends State<PostCard> {
                               offset: const Offset(0, 3),
                             ),
                           ],
+                          image: photoURL != null
+                              ? DecorationImage(
+                                  image: NetworkImage(photoURL),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: Center(
-                          child: Text(
-                            firstLetter,
-                            style: TextStyle(
-                              color: Colors.deepPurple.shade800,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                        child: photoURL == null
+                            ? Center(
+                                child: Text(
+                                  firstLetter,
+                                  style: TextStyle(
+                                    color: Colors.deepPurple.shade800,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            : null,
                       ),
                     ),
                     const SizedBox(width: 12),

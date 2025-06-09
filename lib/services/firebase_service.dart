@@ -6,7 +6,6 @@ class FirebaseService {
   static final CollectionReference _posts = _firestore.collection('posts');
   static final CollectionReference _users = _firestore.collection('users');
 
-  // Create post (now only stores user ID)
   static Future<void> createPost(String content) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('User not logged in');
@@ -41,10 +40,12 @@ class FirebaseService {
   static Future<void> updateUserProfile({
     required String userId,
     required String username,
+    required String photoURL,
   }) async {
     await _users.doc(userId).set({
       'username': username,
       'updatedAt': FieldValue.serverTimestamp(),
+      'photoURL': photoURL,
     }, SetOptions(merge: true));
   }
 

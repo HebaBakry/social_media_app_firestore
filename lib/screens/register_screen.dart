@@ -1,4 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:social_media_app/screens/email_verification_screen.dart';
 import 'package:social_media_app/services/auth_service.dart';
 import 'package:social_media_app/services/toast_service.dart';
@@ -20,6 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  XFile? _pickedImage;
 
   @override
   void dispose() {
@@ -31,25 +37,65 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  Future<String> uploadImageToCloudinary(XFile imageFile) async {
+    const String cloudName = 'diqxxofhp';
+    const String uploadPreset = 'socialmedia';
+
+    final url = Uri.parse(
+      'https://api.cloudinary.com/v1_1/$cloudName/image/upload',
+    );
+
+    final request = http.MultipartRequest('POST', url)
+      ..fields['upload_preset'] = uploadPreset
+      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final respStr = await response.stream.bytesToString();
+      final data = jsonDecode(respStr);
+      return data['secure_url'];
+    } else {
+      throw Exception('Image upload failed');
+    }
+  }
+
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
+      if (_pickedImage == null) {
+        ToastService.showError('Please select a profile image.');
+        return;
+      }
+
       setState(() {
         _isLoading = true;
       });
 
       try {
+        final imageUrl = await uploadImageToCloudinary(_pickedImage!);
+        print('imagUrl $imageUrl');
+        // Register user
         final user = await AuthService.registerWithEmail(
           _emailController.text.trim().toLowerCase(),
           _passwordController.text,
           _usernameController.text.trim(),
+          imageUrl,
         );
 
-        if (!mounted) return;
+        print('User: $user');
+        print('User UID: ${user?.uid}');
+        print('User email: ${user?.email}');
+        print('User displayName: ${user?.displayName}');
+        print('User photoURL: ${user?.photoURL}');
 
         if (user != null) {
+          // Update user's photoURL in auth
+          await user.updatePhotoURL(imageUrl);
+
           ToastService.showSuccess(
             "Registration successful! Please verify your email.",
           );
+          if (!mounted) return;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -65,6 +111,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
           setState(() => _isLoading = false);
         }
       }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedImage = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 75,
+    );
+
+    if (pickedImage != null) {
+      setState(() {
+        _pickedImage = pickedImage;
+      });
     }
   }
 
@@ -111,6 +171,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
+              Center(
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey[300],
+                    backgroundImage: _pickedImage != null
+                        ? FileImage(File(_pickedImage!.path))
+                        : null,
+                    child: _pickedImage == null
+                        ? Icon(
+                            Icons.camera_alt,
+                            size: 40,
+                            color: Colors.grey[700],
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // Username Field
               TextFormField(
                 controller: _usernameController,

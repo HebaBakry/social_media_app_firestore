@@ -13,6 +13,7 @@ class AuthService {
     String email,
     String password,
     String username,
+    String photoUrl,
   ) async {
     try {
       UserCredential credential = await _auth.createUserWithEmailAndPassword(
@@ -21,12 +22,15 @@ class AuthService {
       );
 
       await credential.user?.updateDisplayName(username);
+      await credential.user?.updatePhotoURL(photoUrl);
+
       await FirebaseService.updateUserProfile(
         userId: credential.user!.uid,
         username: username,
+        photoURL: photoUrl,
       );
-      await credential.user?.sendEmailVerification();
 
+      await credential.user?.sendEmailVerification();
       return credential.user;
     } catch (e) {
       print("Registration error: $e");
@@ -70,6 +74,7 @@ class AuthService {
       await FirebaseService.updateUserProfile(
         userId: _auth.currentUser!.uid,
         username: username,
+        photoURL: _auth.currentUser!.photoURL!,
       );
       await _auth.currentUser?.reload();
     } catch (e) {

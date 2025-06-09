@@ -227,17 +227,25 @@ class _HomeScreenState extends State<HomeScreen> {
                             offset: const Offset(0, 3),
                           ),
                         ],
+                        image: currentUser?.photoURL != null
+                            ? DecorationImage(
+                                image: NetworkImage(currentUser!.photoURL!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
-                      child: Center(
-                        child: Text(
-                          firstLetter,
-                          style: TextStyle(
-                            color: Colors.deepPurple.shade800,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      child: currentUser?.photoURL == null
+                          ? Center(
+                              child: Text(
+                                firstLetter,
+                                style: TextStyle(
+                                  color: Colors.deepPurple.shade800,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          : null,
                     ),
                   ),
                   const SizedBox(width: 12),

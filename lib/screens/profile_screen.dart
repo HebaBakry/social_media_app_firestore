@@ -21,6 +21,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isEditing = false;
   bool _isLoadingUserData = true;
   bool _isSavingProfile = false;
+  String? photoURL;
 
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
@@ -39,6 +40,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       _username = userData?['username'] ?? 'User';
       _usernameController.text = _username;
+      photoURL = userData?['photoURL'];
+      print('photo: $photoURL');
     } catch (e) {
       ToastService.showError('Failed to load user data: $e');
       _username = 'User';
@@ -64,6 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await FirebaseService.updateUserProfile(
         userId: currentUser!.uid,
         username: _usernameController.text,
+        photoURL: currentUser!.photoURL!,
       );
 
       setState(() {
@@ -98,14 +102,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: CircleAvatar(
                         radius: 60,
                         backgroundColor: Colors.deepPurple.shade100,
-                        child: Text(
-                          firstLetter,
-                          style: TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.deepPurple.shade800,
-                          ),
-                        ),
+                        backgroundImage: photoURL != null
+                            ? NetworkImage(photoURL!)
+                            : null,
+                        child: photoURL == null
+                            ? Text(
+                                firstLetter,
+                                style: TextStyle(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple.shade800,
+                                ),
+                              )
+                            : null,
                       ),
                     ),
                     Positioned(
