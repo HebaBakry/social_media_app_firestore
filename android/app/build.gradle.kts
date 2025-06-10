@@ -11,7 +11,7 @@ plugins {
 android {
     namespace = "com.example.social_media_app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.2.12479018"
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
